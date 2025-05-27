@@ -1,0 +1,21 @@
+{
+    "embed_dim": 384,
+    "init_logit_bias": -10,
+    "custom_text": true,
+    "vision_cfg": {
+        "image_size": 256,
+        "layers": 12,
+        "width": 384,
+        "patch_size": 32
+    },
+    "text_cfg": {
+        "context_length": 180,
+        "vocab_size": 49408,
+        "width": 384,
+        "heads": 6,
+        "layers": 12,
+        "no_causal_mask": true,
+        "mask_pad": true,
+        "proj_bias": true
+    }
+}

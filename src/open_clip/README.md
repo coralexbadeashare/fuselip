@@ -1,0 +1,1 @@
+Forked from [OpenCLIP](https://github.com/mlfoundations/open_clip).

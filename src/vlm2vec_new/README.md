@@ -1,0 +1,1 @@
+Forked from [VLM2Vec](https://github.com/TIGER-AI-Lab/VLM2Vec).

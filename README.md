@@ -3,7 +3,7 @@ Christian Schlarmann&nbsp;&nbsp;•&nbsp;&nbsp;Francesco Croce&nbsp;&nbsp;•&nb
 
 ![](assets/FuseLIP-arch.png)
 
-[[Paper]](TODO) [[HuggingFace]](https://huggingface.co/collections/chs20/fuselip-683d47bf98a27154e14c830b) [[BibTeX]](#citation) 
+[[Paper]](https://arxiv.org/abs/2506.03096) [[HuggingFace]](https://huggingface.co/collections/chs20/fuselip-683d47bf98a27154e14c830b) [[BibTeX]](#citation) 
 
 FuseLIP is a multimodal embedding architecture that unifies text and image inputs through early fusion. Unlike traditional contrastive models that use separate encoders and rely on late fusion, FuseLIP employs a single transformer operating on a joint vocabulary of discrete image and text tokens. This enables deep cross-modal interaction and richer representations.
 
@@ -208,4 +208,10 @@ This codebase gratefully forks from
 ## Citation
 If you find this project useful, please cite our paper:
 ```bibtex
+@article{schlarmann2025fuselip,
+	title = {FuseLIP: Multimodal Embeddings via Early Fusion of Discrete Tokens},
+	author = {Christian Schlarmann and Francesco Croce and Nicolas Flammarion and Matthias Hein},
+	year = 2025,
+	journal = {arXiv preprint arXiv:2506.03096}
+}
 ```

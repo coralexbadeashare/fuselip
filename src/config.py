@@ -3,8 +3,8 @@ import os.path
 MACHINE = "VM"
 
 if MACHINE == "VM":
-    PROJECT_PATH = "/path/to/project"
-    DATA_DIR = "/path/to/data"
+    PROJECT_PATH = "/mnt/sda1/alex/fuselip"
+    DATA_DIR = "/mnt/sda1/alex/fuselip/cc3m_data"
 else:
     raise ValueError("Unknown machine")
 

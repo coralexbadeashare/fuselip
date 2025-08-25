@@ -663,6 +663,8 @@ def resolve_args(args):
 
     if args.feature_fusion == "none":
         args.feature_fusion = None
-
-    if args.imagenet_val is None:
-        args.imagenet_val = IMAGENET_VAL_PATH
+    # Disable ImageNet validation if the directory does not exist
+    args.imagenet_val = None
+    # Disable wandb logging
+    args.wandb = False
+    args.report_to = 'none'

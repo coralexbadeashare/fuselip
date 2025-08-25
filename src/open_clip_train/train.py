@@ -295,8 +295,11 @@ def train_one_epoch(model, data, loss, epoch, optimizer, scaler, scheduler, dist
 
     if args.mlm_loss:
         unwrap_model(model).set_return_preds(False)  # For now not used for evaluation.
-        torch.distributed.barrier()
-        rank = torch.distributed.get_rank()
+        if torch.distributed.is_initialized():
+            torch.distributed.barrier()
+            rank = torch.distributed.get_rank()
+        else:
+            rank = 0
         print(f"Rank {rank} return_preds: {unwrap_model(model).return_pred}")
     if args.rr_loss:
         unwrap_model(model).set_return_repl_preds(False)

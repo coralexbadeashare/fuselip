@@ -49,7 +49,8 @@ class CsvDataset(Dataset):
         logging.debug('Done loading data.')
 
         self.tokenize = tokenizer
-        self.data_path = os.path.dirname(input_filename)
+        from config import DATA_DIR
+        self.data_path = os.path.join(DATA_DIR, "cc3m")
 
         self.return_multimodal_format = return_multimodal_format
 

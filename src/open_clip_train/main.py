@@ -179,8 +179,8 @@ def main(args):
             resume_from = broadcast_object(args, resume_from)
         args.resume = resume_from
 
-    if args.copy_codebase:
-        copy_codebase(args)
+        print("[INFO] Skipping codebase copying step. Using code from the original folder.")
+        logging.info("[INFO] Skipping codebase copying step. Using code from the original folder.")
 
     # start the sync proces if remote-sync is not None
     remote_sync_process = None

@@ -114,8 +114,8 @@ def remove_invalid(csv_path, n_jobs=8):
 
 
 if __name__ == '__main__':
-    data_path = "/path/to/cc3m/train"
-    csv_path = "/path/to/cc3m/train.csv"
+    data_path = "./cc3m_data/cc3m/val"
+    csv_path = "./cc3m_data/cc3m/val.csv"
 
     # data_path = "/path/to/cc3m/val"
     # csv_path = "/path/to/cc3m/val.csv"

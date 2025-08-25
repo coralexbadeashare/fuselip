@@ -42,7 +42,7 @@ For **evaluation**, please download the following datasets additionally:
 - [MMEB](https://huggingface.co/datasets/TIGER-Lab/MMEB-eval): download images via
 ```bash
 wget https://huggingface.co/datasets/TIGER-Lab/MMEB-eval/resolve/main/images.zip
-unzip images.zip -d eval_images/
+unzip images.zip -d ./eval_images/
 ```
 - [ImageNet](https://www.image-net.org/download.php) validation set
 
@@ -51,7 +51,7 @@ Then set the paths to the datasets in `./src/config.py`.
 
 ## Pretrained Models
 We provide pretrained FuseLIP models that can be used for evaluation or fine-tuning. The models attain the following performance:
-
+/mnt/sda1/alex/fuselip/cc3m_data/cc3m/MMEB/eval_images/ImageNet-1K
 <table>
   <thead>
     <tr>

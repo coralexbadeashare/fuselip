@@ -219,5 +219,19 @@ If you find this project useful, please cite our paper:
 docker build -t fuselip-app .
 docker run --gpus all --name bacor_fuselip -it --rm -u $(id -u):$(id -g) fuselip-app
 
+mkdir -p $(pwd)/ROCOv2_data 
+python scripts/download_rocov2.py
+
 docker build -f Dockerfile.train -t fuselip-train .
-docker run --gpus all --name bacor_fuselip -it --rm -u $(id -u):$(id -g) fuselip-train
+docker stop bacor_fuselip
+
+# Run training container with model output directory mounted
+docker run --gpus all \
+    --name bacor_fuselip \
+    -it --r2_data:/app/fuselip/ROCOv2_data \
+    -v $HOME/.cache:/.cache \
+    -v $HOME/.config:/.config \
+    fuselip-trainm \
+    -u $(id -u):$(id -g) \
+    -v $(pwd)/trained_models:/workspace/models \
+    -v $(pwd)/ROCOv

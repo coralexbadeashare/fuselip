@@ -16,8 +16,9 @@ else
     exit 1
 fi
 
-# First, download ROCCO v2 dataset if not already downloaded
-python scripts/download_rocov2.py
+# Create output directory
+OUTPUT_DIR="/workspace/models/fuselip_roccov2_${transformer_size}"
+mkdir -p ${OUTPUT_DIR}
 
 # Run the fine-tuning
 torchrun --rdzv_backend=c10d --rdzv_endpoint=localhost:29508 --nproc_per_node=8 -m open_clip_train.main \
@@ -26,23 +27,13 @@ torchrun --rdzv_backend=c10d --rdzv_endpoint=localhost:29508 --nproc_per_node=8 
     --save-most-recent \
     --zeroshot-frequency 1 \
     --report-to wandb \
-    --train-data="roccov2" \
-    --val-data="roccov2" \
-    --dataset-type=roccov2 \
-    --warmup 1000 \
-    --batch-size=128 \
-    --lr=5e-5 \
-    --wd=0.1 \
-    --epochs=10 \
-    --workers=8 \
-    --model fuse-clip-titok \
-    --pretrained "chs20/FuseLIP-S-CC3M-MM" \
-    --image-tokenizer "${tokenizer_path}" \
-    --transformer-size "${transformer_size}" \
-    --context-len 180 \
+    --train-data="/workspace/ROCOv2_data/train" \
+    --val-data="/workspace/ROCOv2_data/validation" \
+    --dataset-type="finetuning" \
+    --csv-img-key="image_path" \
+    --csv-caption-key="caption" \
+    --pretrained="chs20/FuseLIP-S-CC3M-MM" \
+    --context-len=77 \
+    --model="fuselip_${transformer_size}" \
     --mask-pad \
-    --siglip \
-    --grad-clip-norm 1.0 \
-    --mlm-loss \
-    --mlm-probability 0.1 \
-    --mlm-loss-weight 0.25
+    --combined-sampling \

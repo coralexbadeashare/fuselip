@@ -162,3 +162,5 @@ eval_data/
 data/
 eval_images/
 images.zip
+ROCOv2_data/
+ROCOv2_data/*   

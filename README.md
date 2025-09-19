@@ -215,3 +215,9 @@ If you find this project useful, please cite our paper:
 	journal = {arXiv preprint arXiv:2506.03096}
 }
 ```
+
+docker build -t fuselip-app .
+docker run --gpus all --name bacor_fuselip -it --rm -u $(id -u):$(id -g) fuselip-app
+
+docker build -f Dockerfile.train -t fuselip-train .
+docker run --gpus all --name bacor_fuselip -it --rm -u $(id -u):$(id -g) fuselip-train

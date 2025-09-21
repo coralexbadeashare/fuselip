@@ -216,22 +216,50 @@ If you find this project useful, please cite our paper:
 }
 ```
 
-docker build -t fuselip-app .
-docker run --gpus all --name bacor_fuselip -it --rm -u $(id -u):$(id -g) fuselip-app
+## Docker Setup and Training
 
-mkdir -p $(pwd)/ROCOv2_data 
-python scripts/download_rocov2.py
+### 1. Download ROCCO v2 Dataset
+First, build and run the dataset download container:
+```bash
+# Create necessary directories
+mkdir -p $(pwd)/ROCOv2_data
+mkdir -p $HOME/.cache
 
-docker build -f Dockerfile.train -t fuselip-train .
-docker stop bacor_fuselip
+# Build the download container
+docker build -f Dockerfile.download -t bacor_fuselip_download .
 
-# Run training container with model output directory mounted
+# Run the download container
+docker run --rm \
+    --name bacor_fuselip_download \
+    -u $(id -u):$(id -g) \
+    -v $(pwd)/ROCOv2_data:/app/fuselip/ROCOv2_data \
+    -v $HOME/.cache:/.cache \
+    bacor_fuselip_download
+```
+
+### 2. Train the Model
+After downloading the dataset, build and run the training container:
+```bash
+# Build the training container
+docker build -f Dockerfile.train -t bacor_fuselip_train .
+
+# Run the training container
 docker run --gpus all \
-    --name bacor_fuselip \
-    -it --r2_data:/app/fuselip/ROCOv2_data \
+    --name bacor_fuselip_train \
+    -it --rm \
+    -u $(id -u):$(id -g) \
+    -v $(pwd)/ROCOv2_data:/workspace/ROCOv2_data \
+    -v $(pwd)/trained_models:/workspace/models \
+    -v $(pwd)/logs:/workspace/logs \
     -v $HOME/.cache:/.cache \
     -v $HOME/.config:/.config \
-    fuselip-trainm \
-    -u $(id -u):$(id -g) \
-    -v $(pwd)/trained_models:/workspace/models \
-    -v $(pwd)/ROCOv
+    bacor_fuselip_train small
+```
+
+The training container will:
+- Use GPU acceleration with CUDA support
+- Mount the ROCCO v2 dataset from your local machine
+- Save trained models to `./trained_models`
+- Save training logs to `./logs`
+- Cache downloads in your home directory
+- Run with your user permissions to avoid file ownership issues

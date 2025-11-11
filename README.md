@@ -263,3 +263,34 @@ The training container will:
 - Save training logs to `./logs`
 - Cache downloads in your home directory
 - Run with your user permissions to avoid file ownership issues
+
+
+
+docker run --gpus all \
+  --name bacor_train \
+  -it --rm \
+  -u $(id -u):$(id -g) \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  huggingface/transformers-pytorch-gpu:latest \
+  sh
+
+Ctrl+P, then Ctrl+Q
+
+docker attach bacor_test
+or new shell:
+docker exec -it bacor_train sh
+
+docker ps
+docker stop bacor_test
+docker rm bacor_test
+
+
+
+export HF_HOME=/workspace/.cache/huggingface
+export TRANSFORMERS_CACHE=/workspace/.cache/transformers
+export XDG_CACHE_HOME=/workspace/.cache
+mkdir -p $HF_HOME $TRANSFORMERS_CACHE
+
+python3 ./scripts/download_datasets.py --datasets cc3m --outdir='/workspace/fuselip/fuselip/cc3m_data'
+

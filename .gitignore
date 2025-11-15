@@ -151,13 +151,11 @@ core.*
 
 # Allow
 !src/evaluation/misc/results_dbs/*
-cc3m_data
+cc3m_data/*
 data
 eval_data
 eval_data/*
 data/*
-cc3m_data/*
-cc3m_data/
 eval_data/
 data/
 eval_images/

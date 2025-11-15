@@ -50,7 +50,7 @@ class CsvDataset(Dataset):
 
         self.tokenize = tokenizer
         from config import DATA_DIR
-        self.data_path = os.path.join(DATA_DIR, "cc3m")
+        self.data_path = DATA_DIR
 
         self.return_multimodal_format = return_multimodal_format
 

@@ -30,8 +30,7 @@ torchrun --rdzv_backend=c10d --rdzv_endpoint=localhost:29506 --nproc_per_node 8 
 --train-data="cc3m-aug,hq-edit,cc3m-vqa,vg-crop,vg-vqa" --val-data="cc3m,cc3m-aug,hq-edit,cc3m-vqa,vg-crop,vg-vqa" \
 --dataset-type=merged --combined-sampling \
 --warmup 12000 --batch-size=256 --lr=1e-3 --wd=1.0 \
---epochs=8 --workers=16 --model "$model" \
---feature-fusion "$fusion" --siglip --context-len 180 \
+--epochs=8 --workers=${WORKERS:-16} --model "$model" \
 --grad-clip-norm 1.0
 
 # if it does not fit on GPU, use --accum-freq 2 --accum-negatives

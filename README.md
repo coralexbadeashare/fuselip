@@ -216,60 +216,14 @@ If you find this project useful, please cite our paper:
 }
 ```
 
-## Docker Setup and Training
+# Run in docker
 
-### 1. Download ROCCO v2 Dataset
-First, build and run the dataset download container:
-```bash
-# Create necessary directories
-mkdir -p $(pwd)/ROCOv2_data
-mkdir -p $HOME/.cache
-
-# Build the download container
-docker build -f Dockerfile.download -t bacor_fuselip_download .
-
-# Run the download container
-docker run --rm \
-    --name bacor_fuselip_download \
-    -u $(id -u):$(id -g) \
-    -v $(pwd)/ROCOv2_data:/app/fuselip/ROCOv2_data \
-    -v $HOME/.cache:/.cache \
-    bacor_fuselip_download
-```
-
-### 2. Train the Model
-After downloading the dataset, build and run the training container:
-```bash
-# Build the training container
-docker build -f Dockerfile.train -t bacor_fuselip_train .
-
-# Run the training container
-docker run --gpus all \
-    --name bacor_fuselip_train \
-    -it --rm \
-    -u $(id -u):$(id -g) \
-    -v $(pwd)/ROCOv2_data:/workspace/ROCOv2_data \
-    -v $(pwd)/trained_models:/workspace/models \
-    -v $(pwd)/logs:/workspace/logs \
-    -v $HOME/.cache:/.cache \
-    -v $HOME/.config:/.config \
-    bacor_fuselip_train small
-```
-
-The training container will:
-- Use GPU acceleration with CUDA support
-- Mount the ROCCO v2 dataset from your local machine
-- Save trained models to `./trained_models`
-- Save training logs to `./logs`
-- Cache downloads in your home directory
-- Run with your user permissions to avoid file ownership issues
-
-
-
-docker run --gpus all \
+--gpus '"device=1,2"'
+--gpus all
+docker run --gpus '"device=1"' \
   --name bacor_train \
   -it --rm \
-  -u $(id -u):$(id -g) \
+  --shm-size=64g \
   -v $(pwd):/workspace \
   -w /workspace \
   huggingface/transformers-pytorch-gpu:latest \
@@ -277,7 +231,7 @@ docker run --gpus all \
 
 Ctrl+P, then Ctrl+Q
 
-docker attach bacor_test
+docker attach bacor_train
 or new shell:
 docker exec -it bacor_train sh
 
@@ -286,11 +240,12 @@ docker stop bacor_test
 docker rm bacor_test
 
 
-
 export HF_HOME=/workspace/.cache/huggingface
 export TRANSFORMERS_CACHE=/workspace/.cache/transformers
 export XDG_CACHE_HOME=/workspace/.cache
 mkdir -p $HF_HOME $TRANSFORMERS_CACHE
-
+pip install -r requirements.txt
 python3 ./scripts/download_datasets.py --datasets cc3m --outdir='/workspace/fuselip/fuselip/cc3m_data'
-
+./scripts/train-fuselip-cc3m.sh base
+./scripts/train-fuselip-roccov2.sh base
+python3 short_script_med.py

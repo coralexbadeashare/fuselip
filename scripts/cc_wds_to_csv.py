@@ -1,130 +1,154 @@
 import os
+import random
+import csv
 import warnings
 from joblib import Parallel, delayed
-
-
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
 
-def convert(data_path, csv_path):
-    # Use a list to collect data rows
-    data = []
+def iter_txt_files(root_dir):
+    """Yield .txt files recursively using scandir (fully streaming)."""
+    for entry in os.scandir(root_dir):
+        if entry.is_file() and entry.name.endswith(".txt"):
+            yield entry.path
+        elif entry.is_dir():
+            yield from iter_txt_files(entry.path)
 
-    # Get a set of all image filenames in the directory to check existence more efficiently
-    image_filenames = set(os.listdir(data_path))
 
+def convert_streaming(data_path, csv_path_all):
+    """
+    Stream through .txt caption files and write CSV line-by-line.
+    Avoids memory buildup and produces relative paths.
+    """
+    print(f"[INFO] Starting streaming conversion in: {data_path}")
     not_found = []
-    for fname in tqdm(os.listdir(data_path)):
-        if fname.endswith(".txt"):
-            img_path = os.path.join(data_path, fname.replace(".txt", ".jpg"))
-            if fname.replace(".txt", ".jpg") not in image_filenames:
-                # print(f"Image {img_path} not found")
-                not_found.append(fname)
-                continue
+    total = 0
+    valid = 0
 
-            # Read the caption
-            with open(os.path.join(data_path, fname), "r") as f:
-                caption = f.read()
+    # Prepare base for relative paths
+    cwd = os.getcwd()
 
-            # Append data to the list
-            img_path = os.path.join(os.path.dirname(img_path), os.path.basename(img_path))
-            data.append([img_path, caption])
+    # Open CSV for streaming write
+    with open(csv_path_all, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["path", "caption"])  # header
 
-    # Create DataFrame from the list once
-    df = pd.DataFrame(data, columns=["path", "caption"])
-    df.to_csv(csv_path, index=False)
+        for txt_path in iter_txt_files(data_path):
+            total += 1
+            base_name = os.path.splitext(txt_path)[0]
+            img_path = base_name + ".jpg"
 
-    print(f"Images not found: {len(not_found)}")
-    print(not_found[:5])
-    print(f"Converted {len(df)} samples to CSV")
-    print("Done")
+            # Try .png fallback
+            if not os.path.exists(img_path):
+                alt_img_path = base_name + ".png"
+                if os.path.exists(alt_img_path):
+                    img_path = alt_img_path
+                else:
+                    not_found.append(txt_path)
+                    continue
+
+            try:
+                with open(txt_path, "r", encoding="utf-8") as f:
+                    caption = f.read().strip()
+
+                # Get path relative to where script is run
+                rel_path = os.path.relpath(img_path, cwd)
+
+                writer.writerow([rel_path, caption])
+                valid += 1
+
+                # Flush every few hundred to ensure safety
+                if valid % 500 == 0:
+                    csvfile.flush()
+
+                # Print progress every 1000
+                if valid % 1000 == 0:
+                    print(f"[STREAM] {valid} captions processed...")
+
+            except Exception as e:
+                print(f"[WARN] Could not read {txt_path}: {e}")
+
+    print(f"[INFO] Stream complete. {valid}/{total} valid entries written.")
+    print(f"[WARN] Missing images: {len(not_found)}")
+    if not_found:
+        print(f"Example missing: {not_found[:3]}")
+    return csv_path_all
 
 
 def _check_image_validity(idx, path):
-    """
-    Check whether an image is valid:
-      1) The file must exist.
-      2) Pillow verify() returns no exception/warning.
-      3) A full decode with load() must succeed.
-      4) The image size is non-zero.
-    Returns a tuple: (idx, is_valid)
-    """
+    """Check if image file exists and can be opened."""
     if not os.path.exists(path):
         return (idx, False)
-
-    # 1) verify() may detect header issues
-    with warnings.catch_warnings(record=True) as w:
+    with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
         try:
             img = Image.open(path)
-            img.verify()  # Closes the file handle internally
-            # If any warnings were raised, consider it invalid
-            if w:
-                return (idx, False)
+            img.verify()
         except Exception:
             return (idx, False)
-
-    # 2) Re-open to force a full decode
     try:
         with Image.open(path) as img:
-            img.load()  # Force reading all pixel data
+            img.load()
             if img.size[0] == 0 or img.size[1] == 0:
                 return (idx, False)
     except Exception:
         return (idx, False)
-
     return (idx, True)
 
 
 def remove_invalid(csv_path, n_jobs=8):
-    """
-    Reads a CSV file containing a 'path' column, checks which images are valid,
-    drops invalid entries, and writes a new CSV: <csv_path>_valid.csv
-    """
+    """Read CSV, validate images, and rewrite only valid ones."""
+    print("[INFO] Checking image validity...")
     df = pd.read_csv(csv_path)
-    print(f"Read {len(df)} samples")
-
-    # Convert to list for parallel iteration
-    paths = df["path"].tolist()
-    paths = [os.path.join(os.path.dirname(csv_path), p) for p in paths]
-
-    # Parallel check for each row
-    # Note: tqdm will only show overall progress of joblib tasks,
-    # not a live-per-sample update.
     results = Parallel(n_jobs=n_jobs)(
-        delayed(_check_image_validity)(i, p)
-        for i, p in tqdm(enumerate(paths), total=len(paths), desc="Validating images")
+        delayed(_check_image_validity)(i, path)
+        for i, path in tqdm(enumerate(df["path"].tolist()), total=len(df), desc="Validating")
     )
-
-    # Gather invalid indices
     invalid_indices = [idx for (idx, valid) in results if not valid]
-
-    len_orig = len(df)
-    df.drop(invalid_indices, inplace=True)
-    print(f"Removed {len(invalid_indices)} invalid or warned samples")
-    print(f"Removed total: {len_orig - len(df)}")
-    print(f"Remaining samples: {len(df)}")
-
-    out_path = csv_path.replace(".csv", "_valid.csv")
-    df.to_csv(out_path, index=False)
+    print(f"[INFO] Found {len(invalid_indices)} invalid images.")
+    df = df.drop(invalid_indices).reset_index(drop=True)
+    df.to_csv(csv_path, index=False)
+    print(f"[INFO] {len(df)} valid samples remain.")
     return df
 
 
+def split_train_val(df, val_ratio=0.2, seed=42):
+    """Shuffle and split into train and val sets."""
+    print(f"[INFO] Splitting dataset with {val_ratio*100:.0f}% for validation...")
+    shuffled = df.sample(frac=1, random_state=seed).reset_index(drop=True)
+    val_size = int(len(shuffled) * val_ratio)
+    df_val = shuffled.iloc[:val_size]
+    df_train = shuffled.iloc[val_size:]
+    print(f"[INFO] -> Train: {len(df_train)} | Val: {len(df_val)}")
+    return df_train, df_val
 
-if __name__ == '__main__':
-    data_path = "./cc3m_data/cc3m/val"
-    csv_path = "./cc3m_data/cc3m/val.csv"
 
-    # data_path = "/path/to/cc3m/val"
-    # csv_path = "/path/to/cc3m/val.csv"
+if __name__ == "__main__":
+    data_path = "./cc3m_data/cc3m_extracted"
+    csv_all = "./cc3m_data/all_data.csv"
+    csv_train = "./cc3m_data/train.csv"
+    csv_val = "./cc3m_data/val.csv"
 
-    # data_path = "/path/to/cc12m/images"
-    # csv_path = "/path/to/cc12m/cc12m.csv"
+    print("===============================================")
+    print("[STEP 1] Streaming conversion to CSV")
+    print("===============================================")
+    convert_streaming(data_path, csv_all)
 
-    convert(data_path, csv_path)
-    remove_invalid(csv_path, n_jobs=8)
+    print("\n===============================================")
+    print("[STEP 2] Removing invalid images")
+    print("===============================================")
+    df = remove_invalid(csv_all, n_jobs=8)
 
-    print("Done")
+    print("\n===============================================")
+    print("[STEP 3] Splitting into train/val")
+    print("===============================================")
+    df_train, df_val = split_train_val(df)
 
+    df_train.to_csv(csv_train, index=False)
+    df_val.to_csv(csv_val, index=False)
+
+    print("\n===============================================")
+    print(f"[DONE] Saved:\n  -> {csv_train}\n  -> {csv_val}")
+    print("===============================================")

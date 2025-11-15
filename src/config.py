@@ -3,14 +3,14 @@ import os.path
 MACHINE = "VM"
 
 if MACHINE == "VM":
-    PROJECT_PATH = "/mnt/sda1/alex/fuselip"
-    DATA_DIR = "/mnt/sda1/alex/fuselip/cc3m_data"
+    PROJECT_PATH = "/workspace/fuselip"
+    DATA_DIR = "/workspace/fuselip/ROCOv2_data" #modify this as needed
 else:
     raise ValueError("Unknown machine")
 
 
-CC3M_TRAIN_CSV_PATH = os.path.join(DATA_DIR, "cc3m/train.csv")
-CC3M_VAL_CSV_PATH = os.path.join(DATA_DIR, "cc3m/val.csv")
+CC3M_TRAIN_CSV_PATH = os.path.join(DATA_DIR, "train.csv")
+CC3M_VAL_CSV_PATH = os.path.join(DATA_DIR, "val.csv")
 CC12M_TRAIN_CSV_PATH = os.path.join(DATA_DIR, "cc12m/cc12m.csv")
 MMEB_TRAIN_IMAGE_DIR = os.path.join(DATA_DIR, "MMEB-train")
 MMEB_VAL_IMAGE_DIR = os.path.join(DATA_DIR, "MMEB/eval_images")
